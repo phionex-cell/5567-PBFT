@@ -389,7 +389,7 @@ def on_msg(msg, addr):
             print(f"✓ Final checkpoint assembled: {final_path}")
     elif t == "RECOVER_HELLO":
         handle_recover_request(msg)
-    print("Primary> ", end="", flush=True)
+    print("P0> ", end="", flush=True)
 
 def reexec_unfinished_as_leader():
     # restart any tx that is not COMMITTED (including ABORTED/STARTED), rebroadcast PRE_PREPARE
@@ -413,7 +413,7 @@ def repl():
     global crashed, current_tx, view, pending_prepare_tx
     while True:
         try:
-            cmd = input("Primary> ").strip()
+            cmd = input("P0> ").strip()
         except (EOFError, KeyboardInterrupt):
             cmd = "quit"
         if not cmd: continue
@@ -525,3 +525,4 @@ def repl():
 if __name__ == "__main__":
     threading.Thread(target=server, daemon=True).start()
     repl()
+
