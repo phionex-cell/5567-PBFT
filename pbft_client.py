@@ -17,21 +17,41 @@ def banner():
         print("× Cannot connect to primary; please make sure the primary is running")
     print("="*60)
     print("\nCommands:")
-    print("  send <k=v,...>  - send a request to the primary")
+    print("  send <k=v,...>  - send a request to the current leader")
     print("  list            - show number of replies received (from all nodes)")
     print("  quit            - exit")
     print("\nclient> ", end="", flush=True)
 
 replies = []
+current_txid = None
 
+
+# def on_msg(msg, addr):
+#     t = msg.get("type")
+#     if t == "REPLY":
+#         replies.append(msg)
+#         src = msg.get("from", "unknown")
+#         print(f"\n→ REPLY received from {src}... ")
+#         print(f"  Total replies so far: {len(replies)} (expected: all nodes will reply)")
+#         print("client> ", end="", flush=True)
 def on_msg(msg, addr):
+    global current_txid, replies
     t = msg.get("type")
     if t == "REPLY":
+        txid = msg.get("txid")
+        # 若收到新的交易 ID，则清零统计
+        if current_txid != txid:
+            current_txid = txid
+            replies = []  # 清空旧交易计数
+            print(f"\n=== New transaction started: {txid} ===")
+
         replies.append(msg)
         src = msg.get("from", "unknown")
-        print(f"\n→ REPLY received from {src}... ")
-        print(f"  Total replies so far: {len(replies)} (expected: all nodes will reply)")
+        result = msg.get("result", "?")
+        print(f"\n→ REPLY received from {src} ({result})")
+        print(f"  Total replies for tx {current_txid}: {len(replies)} (expected: all nodes will reply)")
         print("client> ", end="", flush=True)
+
 
 def server():
     json_server("127.0.0.1", client_port, on_msg, on_ready=banner)
@@ -58,7 +78,6 @@ def repl():
             print("Unknown command")
 
 if __name__ == "__main__":
-    # Accept either `python pbft_client.py 7000` or default to 7000
     if len(sys.argv) >= 2:
         try:
             client_port = int(sys.argv[1])
